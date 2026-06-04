@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LeoMatch — Dashboard</title>
+<style>
+  :root,[data-theme="dark"]{
+    --bg:#0f0f0f;--surface:#161616;--surface2:#1e1e1e;--border:#252525;
+    --text:#e0e0e0;--muted:#666;--accent:#4f98a3;--accent-dim:rgba(79,152,163,.12);
+    --green:#4caf50;--red:#e57373;--yellow:#ffc107;--blue:#64b5f6;
+  }
+  [data-theme="light"]{
+    --bg:#f0f0f0;--surface:#fff;--surface2:#f5f5f5;--border:#ddd;
+    --text:#1a1a1a;--muted:#888;--accent:#01696f;--accent-dim:rgba(1,105,111,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+  /* Header */
+  header{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+  .logo{font-weight:700;font-size:16px;letter-spacing:-.3px;margin-right:auto;}
+  .logo span{color:var(--accent);}
+  .stat-chip{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--surface2);padding:4px 10px;border-radius:20px;border:1px solid var(--border);}
+  .stat-chip b{color:var(--text);font-weight:600;}
+
+  /* Mode toggle */
+  .mode-group{display:flex;gap:4px;background:var(--surface2);padding:3px;border-radius:8px;border:1px solid var(--border);}
+  .mode-btn{padding:4px 12px;border-radius:5px;border:none;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);background:transparent;transition:all .15s;}
+  .mode-btn.active-auto{background:var(--green);color:#fff;}
+  .mode-btn.active-hybrid{background:var(--yellow);color:#000;}
+  .mode-btn.active-off{background:var(--red);color:#fff;}
+  .mode-btn:hover:not([disabled]){opacity:.8;}
+
+  .theme-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:13px;}
+
+  /* Layout */
+  .layout{display:grid;grid-template-columns:300px 1fr;flex:1;overflow:hidden;}
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+  .sidebar-header{padding:10px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);flex-shrink:0;}
+  .chat-list{overflow-y:auto;flex:1;}
+
+  /* Chat item */
+  .chat-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;}
+  .chat-item:hover{background:var(--surface2);}
+  .chat-item.active{background:var(--accent-dim);}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;color:#fff;}
+  .chat-info{flex:1;min-width:0;}
+  .chat-name{font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;}
+  .chat-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .chat-preview.me{color:var(--accent);}
+  .badge{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:600;flex-shrink:0;}
+  .badge-active{background:rgba(76,175,80,.18);color:var(--green);}
+  .badge-paused{background:rgba(255,193,7,.15);color:var(--yellow);}
+
+  /* Main panel */
+  .main{display:flex;flex-direction:column;overflow:hidden;}
+  .chat-header{padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .chat-title{font-weight:700;font-size:15px;}
+  .chat-title a{color:var(--accent);text-decoration:none;}
+  .chat-title a:hover{text-decoration:underline;}
+  .actions{display:flex;gap:6px;}
+  .btn{padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:opacity .15s;}
+  .btn:hover{opacity:.8;}
+  .btn-resume{background:var(--green);color:#fff;}
+  .btn-pause{background:var(--yellow);color:#000;}
+
+  /* Messages */
+  .messages{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:6px;}
+  .msg{max-width:68%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word;}
+  .msg-her{background:var(--surface2);align-self:flex-start;border-bottom-left-radius:3px;}
+  .msg-me{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
+  .msg-time{font-size:10px;opacity:.55;margin-top:3px;text-align:right;}
+  .msg-her .msg-time{text-align:left;}
+
+  .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;}
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+  @media(max-width:620px){.layout{grid-template-columns:1fr}.main{display:none}.main.visible{display:flex}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Leo<span>Match</span></div>
+
+  <div class="stat-chip" id="s-matches">Матчей сегодня: <b id="v-matches">—</b></div>
+  <div class="stat-chip" id="s-sent">Отправлено сегодня: <b id="v-sent">—</b></div>
+  <div class="stat-chip">Активных: <b id="v-active">—</b></div>
+  <div class="stat-chip">Пауза: <b id="v-paused">—</b></div>
+
+  <div class="mode-group">
+    <button class="mode-btn" data-mode="AUTO"   onclick="setMode('AUTO')">AUTO</button>
+    <button class="mode-btn" data-mode="HYBRID" onclick="setMode('HYBRID')">HYBRID</button>
+    <button class="mode-btn" data-mode="OFF"    onclick="setMode('OFF')">OFF</button>
+  </div>
+
+  <button class="theme-btn" onclick="toggleTheme()">☀ / ☾</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">Чаты</div>
+    <div class="chat-list" id="chat-list"></div>
+  </aside>
+
+  <main class="main" id="main-panel">
+    <div class="empty" id="empty-state">← Выбери чат</div>
+
+    <div id="chat-view" style="display:none;flex-direction:column;height:100%;">
+      <div class="chat-header">
+        <div class="chat-title" id="chat-title">—</div>
+        <div class="actions">
+          <button class="btn btn-resume" onclick="setStatus('active')">▶ Возобновить</button>
+          <button class="btn btn-pause"  onclick="setStatus('paused')">⏸ Пауза</button>
+        </div>
+      </div>
+      <div class="messages" id="messages"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+let currentChat = null;
+let allChats = [];
+let currentMode = 'AUTO';
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+function toggleTheme(){
+  const h = document.documentElement;
+  h.setAttribute('data-theme', h.getAttribute('data-theme')==='dark'?'light':'dark');
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────
+async function loadStats(){
+  try {
+    const s = await (await fetch('/api/stats')).json();
+    document.getElementById('v-matches').textContent = s.matches_today;
+    document.getElementById('v-sent').textContent    = s.sent_today;
+    document.getElementById('v-active').textContent  = s.active;
+    document.getElementById('v-paused').textContent  = s.paused;
+  } catch(e){}
+}
+
+// ── Mode ───────────────────────────────────────────────────────────────────
+async function loadMode(){
+  try {
+    const d = await (await fetch('/api/mode')).json();
+    currentMode = d.mode;
+    updateModeUI(currentMode);
+  } catch(e){}
+}
+
+async function setMode(mode){
+  await fetch('/api/mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})});
+  currentMode = mode;
+  updateModeUI(mode);
+}
+
+function updateModeUI(mode){
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.remove('active-auto','active-hybrid','active-off');
+    if(btn.dataset.mode === mode){
+      btn.classList.add(`active-${mode.toLowerCase()}`);
+    }
+  });
+}
+
+// ── Chats ──────────────────────────────────────────────────────────────────
+async function loadChats(){
+  try {
+    allChats = await (await fetch('/api/chats')).json();
+    renderChats();
+  } catch(e){}
+}
+
+function renderChats(){
+  const list = document.getElementById('chat-list');
+  if(!allChats.length){
+    list.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:13px;text-align:center">Матчей пока нет</div>';
+    return;
+  }
+  list.innerHTML = allChats.map(c => {
+    const initial = (c.name || c.username || '?')[0].toUpperCase();
+    const displayName = c.name ? `${c.name} (@${c.username||c.telegram_chat_id})` : `@${c.username||c.telegram_chat_id}`;
+    const preview = c.last_message
+      ? (c.last_sender==='me' ? '→ ' : '') + esc(c.last_message).substring(0,45) + (c.last_message.length>45?'…':'')
+      : '&nbsp;';
+    const previewCls = c.last_sender==='me' ? 'chat-preview me' : 'chat-preview';
+    return `
+      <div class="chat-item${currentChat?.id===c.id?' active':''}" onclick="selectChat(${c.id})">
+        <div class="avatar">${initial}</div>
+        <div class="chat-info">
+          <div class="chat-name">${esc(displayName)}</div>
+          <div class="${previewCls}">${preview}</div>
+        </div>
+        <span class="badge badge-${c.status}">${c.status==='active'?'active':'pause'}</span>
+      </div>`;
+  }).join('');
+}
+
+async function selectChat(id){
+  currentChat = allChats.find(c=>c.id===id);
+  const username = currentChat.username || currentChat.telegram_chat_id;
+  const name = currentChat.name ? `${currentChat.name} · ` : '';
+  document.getElementById('chat-title').innerHTML =
+    `${esc(name)}<a href="https://t.me/${username}" target="_blank">@${esc(username)}</a>`;
+  document.getElementById('empty-state').style.display='none';
+  const cv = document.getElementById('chat-view');
+  cv.style.display='flex';
+  renderChats();
+  await loadMessages(id);
+}
+
+// ── Messages ───────────────────────────────────────────────────────────────
+async function loadMessages(chatId){
+  try {
+    const msgs = await (await fetch(`/api/messages/${chatId}`)).json();
+    const el = document.getElementById('messages');
+    if(!msgs.length){ el.innerHTML='<div class="empty">Нет сообщений</div>'; return; }
+    el.innerHTML = msgs.map(m=>`
+      <div class="msg msg-${m.sender==='me'?'me':'her'}">
+        ${esc(m.text)}
+        <div class="msg-time">${fmtTime(m.timestamp)}</div>
+      </div>`).join('');
+    el.scrollTop = el.scrollHeight;
+  } catch(e){}
+}
+
+// ── Status ─────────────────────────────────────────────────────────────────
+async function setStatus(status){
+  if(!currentChat) return;
+  await fetch('/api/status',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({telegram_chat_id: currentChat.telegram_chat_id, status})
+  });
+  currentChat.status = status;
+  await loadChats();
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fmtTime(ts){
+  if(!ts) return '';
+  const d = new Date(ts.replace(' ','T'));
+  const now = new Date();
+  if(d.toDateString()===now.toDateString())
+    return d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+Promise.all([loadChats(), loadStats(), loadMode()]);
+
+setInterval(()=>{
+  loadChats();
+  loadStats();
+  if(currentChat) loadMessages(currentChat.id);
+}, 10000);
+</script>
+</body>
+</html>
