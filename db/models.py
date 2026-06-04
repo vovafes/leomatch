@@ -90,8 +90,8 @@ async def get_all_chats() -> list[dict]:
         db.row_factory = aiosqlite.Row
         cur = await db.execute("""
             SELECT c.*,
-                   m.text   AS last_message,
-                   m.sender AS last_sender,
+                   m.text      AS last_message,
+                   m.sender    AS last_sender,
                    m.timestamp AS last_message_time
             FROM chats c
             LEFT JOIN messages m ON m.id = (
@@ -118,23 +118,18 @@ async def get_messages_for_chat(chat_id: int, limit: int = 50) -> list[dict]:
 async def get_stats() -> dict:
     async with aiosqlite.connect(DB_PATH) as db:
         db.row_factory = aiosqlite.Row
-
         cur = await db.execute("SELECT COUNT(*) as n FROM chats")
         total = (await cur.fetchone())["n"]
-
         cur = await db.execute("SELECT COUNT(*) as n FROM chats WHERE status = 'active'")
         active = (await cur.fetchone())["n"]
-
         cur = await db.execute(
-            "SELECT COUNT(*) as n FROM messages WHERE sender = 'me' AND date(timestamp) = date('now')"
+            "SELECT COUNT(*) as n FROM messages WHERE sender='me' AND date(timestamp)=date('now')"
         )
         sent_today = (await cur.fetchone())["n"]
-
         cur = await db.execute(
             "SELECT COUNT(*) as n FROM chats WHERE date(created_at) = date('now')"
         )
         matches_today = (await cur.fetchone())["n"]
-
         return {
             "total": total,
             "active": active,
@@ -142,6 +137,21 @@ async def get_stats() -> dict:
             "sent_today": sent_today,
             "matches_today": matches_today,
         }
+
+
+async def get_activity_stats(days: int = 14) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute("""
+            SELECT date(timestamp) as day,
+                   SUM(CASE WHEN sender='me'  THEN 1 ELSE 0 END) as sent,
+                   SUM(CASE WHEN sender='her' THEN 1 ELSE 0 END) as received
+            FROM messages
+            WHERE timestamp >= datetime('now', ? )
+            GROUP BY date(timestamp)
+            ORDER BY day ASC
+        """, (f"-{days} days",))
+        rows = await cur.fetchall()
+        return [{"day": r[0], "sent": r[1], "received": r[2]} for r in rows]
 
 
 async def get_setting(key: str, default: str = "") -> str:
@@ -155,7 +165,8 @@ async def get_setting(key: str, default: str = "") -> str:
 async def set_setting(key: str, value: str):
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute(
-            "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            "INSERT INTO settings (key, value) VALUES (?, ?)"
+            " ON CONFLICT(key) DO UPDATE SET value = excluded.value",
             (key, value),
         )
         await db.commit()

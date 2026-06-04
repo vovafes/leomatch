@@ -33,3 +33,15 @@ async def human_delay(client: Client, chat_id: int, text: str):
     except Exception:
         pass
     await asyncio.sleep(min(len(text) * 0.055, 7))
+
+
+async def is_sleep_time() -> bool:
+    from db.models import get_setting
+    if await get_setting("sleep_enabled", "false") != "true":
+        return False
+    now_h = datetime.now().hour
+    start = int(await get_setting("sleep_start", "23"))
+    end   = int(await get_setting("sleep_end",   "8"))
+    if start > end:          # overnight window, e.g. 23–08
+        return now_h >= start or now_h < end
+    return start <= now_h < end

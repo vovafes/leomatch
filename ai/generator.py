@@ -24,6 +24,16 @@ def load_persona() -> dict:
         return yaml.safe_load(f)
 
 
+def save_persona(data: dict):
+    fields = ["name", "age", "about", "character", "writing_style", "taboo"]
+    clean = {k: data[k] for k in fields if k in data}
+    # age must be int
+    if "age" in clean:
+        clean["age"] = int(clean["age"])
+    with open(PERSONA_FILE, "w", encoding="utf-8") as f:
+        yaml.dump(clean, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+
 def build_system_prompt(persona: dict, mode: str = "chat") -> str:
     if mode == "opener":
         task = (
@@ -38,13 +48,12 @@ def build_system_prompt(persona: dict, mode: str = "chat") -> str:
         )
     elif mode == "nudge":
         task = (
-            "написать ОДНО короткое сообщение девушке, которая давно не отвечала. "
+            "написать ОДНО очень короткое сообщение девушке, которая давно не отвечала. "
             "Как будто тебе стало интересно, куда она пропала — без претензий, легко."
         )
         rules = (
             "• Максимум одно предложение, очень коротко\n"
             "• Никакого нытья и «почему не отвечаешь»\n"
-            "• Лёгкая подначка или просто живой интерес\n"
         )
     else:
         task = (
@@ -59,10 +68,10 @@ def build_system_prompt(persona: dict, mode: str = "chat") -> str:
         )
 
     return (
-        f"Ты — {persona['name']}, {persona['age']} лет. {persona['about'].strip()}.\n\n"
-        f"Характер: {persona['character'].strip()}.\n"
-        f"Как пишешь: {persona['writing_style'].strip()}.\n"
-        f"Табу: {persona['taboo'].strip()}.\n\n"
+        f"Ты — {persona['name']}, {persona['age']} лет. {str(persona['about']).strip()}.\n\n"
+        f"Характер: {str(persona['character']).strip()}.\n"
+        f"Как пишешь: {str(persona['writing_style']).strip()}.\n"
+        f"Табу: {str(persona['taboo']).strip()}.\n\n"
         f"Задача: {task}\n\n"
         f"Правила:\n"
         f"• Пиши живо и нативно — никто не должен догадаться, что это ИИ\n"

@@ -1,7 +1,7 @@
 import asyncio
+import json
 import logging
 import re
-from datetime import datetime
 
 from pyrogram import Client, filters
 from pyrogram.errors import FloodWait
@@ -17,7 +17,7 @@ from db.models import (
     set_chat_status,
     get_setting,
 )
-from utils.delays import human_delay, check_rate_limit, should_skip_reply
+from utils.delays import human_delay, check_rate_limit, should_skip_reply, is_sleep_time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,11 +30,9 @@ app = Client("leomatch_session", api_id=config.API_ID, api_hash=config.API_HASH)
 
 # Chat IDs where bot just sent — used to ignore our own outgoing events
 _bot_sent: set[int] = set()
-# Tracks last incoming message time per telegram_chat_id
-_last_message_time: dict[int, datetime] = {}
 
 
-# ─── Helper ──────────────────────────────────────────────────────────────────
+# ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def _parse_match_info(text: str) -> dict | None:
     username = None
@@ -67,7 +65,29 @@ async def _send(chat_id: int, username: str, text: str):
         await app.send_message(username, text)
 
 
-# ─── Match notification handler ──────────────────────────────────────────────
+async def _maybe_send_sticker(client: Client, chat_id: int, username: str):
+    raw  = await get_setting("stickers", "[]")
+    prob = int(await get_setting("sticker_probability", "15")) / 100
+    try:
+        ids = json.loads(raw)
+    except Exception:
+        return
+    if not ids or not (prob > 0):
+        return
+    import random
+    if random.random() >= prob:
+        return
+    sticker_id = random.choice(ids)
+    await asyncio.sleep(random.uniform(1, 3))
+    _bot_sent.add(chat_id)
+    try:
+        await client.send_sticker(username, sticker_id)
+        logger.info("Sticker sent to %s", username)
+    except Exception as exc:
+        logger.warning("Failed to send sticker: %s", exc)
+
+
+# ─── Match notification ───────────────────────────────────────────────────────
 
 @app.on_message(filters.chat(config.LEOMATCH_BOT))
 async def on_match_notification(client: Client, message: Message):
@@ -83,7 +103,6 @@ async def on_match_notification(client: Client, message: Message):
 
     mode = await _get_mode()
     if mode == "OFF":
-        logger.info("Mode=OFF, skipping opener")
         return
 
     try:
@@ -94,7 +113,6 @@ async def on_match_notification(client: Client, message: Message):
 
     chat = await get_or_create_chat(tg_user.id, info["username"], info["name"])
     if chat["status"] == "paused":
-        logger.info("@%s is paused, skipping", info["username"])
         return
 
     context = await get_context(chat["id"])
@@ -127,35 +145,39 @@ async def on_match_notification(client: Client, message: Message):
         await save_message(chat["id"], "me", opener)
         logger.info("Opener sent to @%s", info["username"])
     except Exception as exc:
-        logger.error("Failed to send opener to @%s: %s", info["username"], exc)
+        logger.error("Failed to send opener: %s", exc)
 
 
-# ─── Incoming private message handler ────────────────────────────────────────
+# ─── Incoming messages ────────────────────────────────────────────────────────
 
 @app.on_message(filters.private & ~filters.bot & ~filters.outgoing)
 async def on_private_message(client: Client, message: Message):
     sender = message.from_user
     if not sender:
         return
-
     text = message.text or message.caption or ""
     if not text:
         return
 
     chat = await get_or_create_chat(sender.id, sender.username or str(sender.id))
 
-    # Only reply to Дайвинчик contacts that have history
+    # Only reply to Дайвинчик contacts that already have an opener
     context = await get_context(chat["id"])
     if not context:
         return
 
-    _last_message_time[sender.id] = datetime.now()
-
     if chat["status"] == "paused":
+        await save_message(chat["id"], "her", text)
         return
 
     mode = await _get_mode()
     if mode == "OFF":
+        await save_message(chat["id"], "her", text)
+        return
+
+    if await is_sleep_time():
+        logger.info("Sleep time, skipping reply to @%s", sender.username)
+        await save_message(chat["id"], "her", text)
         return
 
     if is_spam(text):
@@ -169,10 +191,12 @@ async def on_private_message(client: Client, message: Message):
 
     if not check_rate_limit(chat["id"]):
         logger.info("Rate limit hit for @%s", sender.username)
+        await save_message(chat["id"], "her", text)
         return
 
     if should_skip_reply():
         logger.info("Randomly skipping reply to @%s", sender.username)
+        await save_message(chat["id"], "her", text)
         return
 
     await save_message(chat["id"], "her", text)
@@ -196,6 +220,7 @@ async def on_private_message(client: Client, message: Message):
         await _send(sender.id, username, reply)
         await save_message(chat["id"], "me", reply)
         logger.info("Replied to @%s", sender.username)
+        await _maybe_send_sticker(client, sender.id, username)
     except Exception as exc:
         logger.error("Failed to reply to @%s: %s", sender.username, exc)
 
@@ -208,37 +233,8 @@ async def on_outgoing_message(client: Client, message: Message):
     if chat_id in _bot_sent:
         _bot_sent.discard(chat_id)
         return
-    # User sent manually → pause this chat
     await set_chat_status(chat_id, "paused")
     logger.info("Manual send detected for %d, chat paused", chat_id)
-
-
-# ─── Silence checker ─────────────────────────────────────────────────────────
-
-async def silence_checker():
-    while True:
-        await asyncio.sleep(300)
-        now = datetime.now()
-        for tg_id, last_time in list(_last_message_time.items()):
-            minutes_silent = (now - last_time).total_seconds() / 60
-            if minutes_silent < config.SILENCE_TIMEOUT_MINUTES:
-                continue
-            try:
-                chat = await get_or_create_chat(tg_id, str(tg_id))
-                if chat["status"] != "active":
-                    continue
-                mode = await _get_mode()
-                if mode == "OFF":
-                    continue
-                context = await get_context(chat["id"])
-                nudge = await generate_message(context, mode="nudge")
-                username = chat["username"] or str(tg_id)
-                await _send(tg_id, username, nudge)
-                await save_message(chat["id"], "me", nudge)
-                _last_message_time[tg_id] = now
-                logger.info("Nudge sent to @%s", username)
-            except Exception as exc:
-                logger.error("Silence checker error for %d: %s", tg_id, exc)
 
 
 # ─── Entry point ─────────────────────────────────────────────────────────────
@@ -246,14 +242,23 @@ async def silence_checker():
 async def main():
     await init_db()
 
+    # Apply saved settings to config
+    config.REPLY_DELAY_MIN = float(
+        await get_setting("reply_delay_min", str(config.REPLY_DELAY_MIN))
+    )
+    config.REPLY_DELAY_MAX = float(
+        await get_setting("reply_delay_max", str(config.REPLY_DELAY_MAX))
+    )
+    config.MAX_MESSAGES_PER_HOUR = int(
+        await get_setting("max_per_hour", str(config.MAX_MESSAGES_PER_HOUR))
+    )
+
     tasks = [app.start()]
     if config.WEB_ENABLED:
         from web.server import start_web
         tasks.append(start_web())
 
     await asyncio.gather(*tasks)
-    asyncio.create_task(silence_checker())
-
     logger.info("LeoMatch started. Mode: %s", config.MODE)
     await asyncio.Event().wait()
 

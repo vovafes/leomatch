@@ -2,116 +2,183 @@
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LeoMatch — Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LeoMatch</title>
 <style>
-  :root,[data-theme="dark"]{
-    --bg:#0f0f0f;--surface:#161616;--surface2:#1e1e1e;--border:#252525;
-    --text:#e0e0e0;--muted:#666;--accent:#4f98a3;--accent-dim:rgba(79,152,163,.12);
-    --green:#4caf50;--red:#e57373;--yellow:#ffc107;--blue:#64b5f6;
-  }
-  [data-theme="light"]{
-    --bg:#f0f0f0;--surface:#fff;--surface2:#f5f5f5;--border:#ddd;
-    --text:#1a1a1a;--muted:#888;--accent:#01696f;--accent-dim:rgba(1,105,111,.08);
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+:root,[data-theme="dark"]{
+  --bg:#0d0d0d;--surface:#161616;--surface2:#1c1c1c;--surface3:#222;
+  --border:#252525;--text:#e0e0e0;--muted:#5a5a5a;--muted2:#888;
+  --accent:#4f98a3;--accent-dim:rgba(79,152,163,.13);
+  --green:#4caf50;--red:#e57373;--yellow:#ffc107;
+}
+[data-theme="light"]{
+  --bg:#f0f2f5;--surface:#fff;--surface2:#f5f5f5;--surface3:#eee;
+  --border:#e0e0e0;--text:#1a1a1a;--muted:#aaa;--muted2:#777;
+  --accent:#0080a0;--accent-dim:rgba(0,128,160,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 
-  /* Header */
-  header{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
-  .logo{font-weight:700;font-size:16px;letter-spacing:-.3px;margin-right:auto;}
-  .logo span{color:var(--accent);}
-  .stat-chip{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--surface2);padding:4px 10px;border-radius:20px;border:1px solid var(--border);}
-  .stat-chip b{color:var(--text);font-weight:600;}
+/* ── Header ───────────────────────────────────────────────────────────────── */
+header{display:flex;align-items:center;gap:10px;padding:8px 16px;
+  background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+.logo{font-weight:800;font-size:15px;letter-spacing:-.4px;color:var(--text);}
+.logo em{color:var(--accent);font-style:normal;}
+.chip{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted2);
+  background:var(--surface2);padding:3px 9px;border-radius:20px;border:1px solid var(--border);}
+.chip b{color:var(--text);font-weight:700;}
+.spacer{flex:1;}
+.mode-group{display:flex;gap:3px;background:var(--surface2);padding:3px;border-radius:7px;border:1px solid var(--border);}
+.mode-btn{padding:3px 11px;border-radius:4px;border:none;font-size:11px;font-weight:700;
+  cursor:pointer;color:var(--muted2);background:transparent;transition:all .15s;}
+.mode-btn:hover{color:var(--text);}
+.mode-btn.active-auto{background:var(--green);color:#fff;}
+.mode-btn.active-hybrid{background:var(--yellow);color:#000;}
+.mode-btn.active-off{background:var(--red);color:#fff;}
+.icon-btn{background:none;border:1px solid var(--border);color:var(--muted2);
+  width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{color:var(--text);}
 
-  /* Mode toggle */
-  .mode-group{display:flex;gap:4px;background:var(--surface2);padding:3px;border-radius:8px;border:1px solid var(--border);}
-  .mode-btn{padding:4px 12px;border-radius:5px;border:none;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted);background:transparent;transition:all .15s;}
-  .mode-btn.active-auto{background:var(--green);color:#fff;}
-  .mode-btn.active-hybrid{background:var(--yellow);color:#000;}
-  .mode-btn.active-off{background:var(--red);color:#fff;}
-  .mode-btn:hover:not([disabled]){opacity:.8;}
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.tab-nav{display:flex;gap:2px;padding:6px 16px;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab-btn{padding:5px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;
+  cursor:pointer;color:var(--muted2);background:transparent;transition:all .15s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{background:var(--accent-dim);color:var(--accent);}
 
-  .theme-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:13px;}
+/* ── Content ──────────────────────────────────────────────────────────────── */
+.tab-pane{flex:1;overflow:hidden;display:none;}
+.tab-pane.visible{display:flex;}
 
-  /* Layout */
-  .layout{display:grid;grid-template-columns:300px 1fr;flex:1;overflow:hidden;}
-  .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-  .sidebar-header{padding:10px 14px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);flex-shrink:0;}
-  .chat-list{overflow-y:auto;flex:1;}
+/* ── Chats tab ────────────────────────────────────────────────────────────── */
+#tab-chats{flex-direction:row;}
+.sidebar{width:280px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-hdr{padding:8px 12px;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--muted);border-bottom:1px solid var(--border);}
+.chat-list{overflow-y:auto;flex:1;}
+.chat-item{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;
+  border-bottom:1px solid var(--border);transition:background .1s;}
+.chat-item:hover{background:var(--surface2);}
+.chat-item.sel{background:var(--accent-dim);}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;
+  flex-shrink:0;color:#fff;}
+.ci-info{flex:1;min-width:0;}
+.ci-name{font-weight:600;font-size:12px;}
+.ci-prev{font-size:11px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.ci-prev.me-prev{color:var(--accent);}
+.badge{font-size:10px;padding:2px 6px;border-radius:999px;font-weight:700;flex-shrink:0;}
+.b-active{background:rgba(76,175,80,.15);color:var(--green);}
+.b-paused{background:rgba(255,193,7,.13);color:var(--yellow);}
+.chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.chat-hdr{padding:9px 16px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.chat-title{font-weight:700;font-size:14px;}
+.chat-title a{color:var(--accent);text-decoration:none;}
+.chat-title a:hover{text-decoration:underline;}
+.actions{display:flex;gap:5px;}
+.btn{padding:4px 11px;border-radius:6px;border:none;cursor:pointer;
+  font-size:11px;font-weight:700;transition:opacity .15s;}
+.btn:hover{opacity:.8;}
+.btn-resume{background:var(--green);color:#fff;}
+.btn-pause{background:var(--yellow);color:#000;}
+.messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:5px;}
+.msg{max-width:66%;padding:7px 11px;border-radius:13px;font-size:13px;line-height:1.5;word-break:break-word;}
+.msg-her{background:var(--surface2);align-self:flex-start;border-bottom-left-radius:3px;}
+.msg-me{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
+.msg-time{font-size:10px;opacity:.5;margin-top:2px;text-align:right;}
+.msg-her .msg-time{text-align:left;}
+.empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;}
 
-  /* Chat item */
-  .chat-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;}
-  .chat-item:hover{background:var(--surface2);}
-  .chat-item.active{background:var(--accent-dim);}
-  .avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;color:#fff;}
-  .chat-info{flex:1;min-width:0;}
-  .chat-name{font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px;}
-  .chat-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
-  .chat-preview.me{color:var(--accent);}
-  .badge{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:600;flex-shrink:0;}
-  .badge-active{background:rgba(76,175,80,.18);color:var(--green);}
-  .badge-paused{background:rgba(255,193,7,.15);color:var(--yellow);}
+/* ── Activity tab ─────────────────────────────────────────────────────────── */
+#tab-activity{flex-direction:column;overflow-y:auto;padding:24px;}
+.act-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.act-title{font-size:13px;font-weight:700;margin-bottom:20px;}
+.chart-wrap{display:flex;align-items:flex-end;gap:5px;height:160px;padding-bottom:4px;}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;}
+.chart-bars{flex:1;width:100%;display:flex;align-items:flex-end;gap:2px;}
+.bar-me,.bar-her{flex:1;border-radius:3px 3px 0 0;min-height:2px;}
+.bar-me{background:var(--accent);}
+.bar-her{background:var(--surface3);border:1px solid var(--border);}
+.chart-lbl{font-size:9px;color:var(--muted2);white-space:nowrap;}
+.act-legend{display:flex;gap:16px;margin-top:14px;font-size:12px;color:var(--muted2);}
+.legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:5px;}
+.act-totals{display:flex;gap:12px;margin-top:16px;}
+.act-total{flex:1;background:var(--surface2);border-radius:8px;padding:12px 14px;}
+.act-total-val{font-size:22px;font-weight:800;color:var(--text);}
+.act-total-lbl{font-size:11px;color:var(--muted2);margin-top:2px;}
 
-  /* Main panel */
-  .main{display:flex;flex-direction:column;overflow:hidden;}
-  .chat-header{padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-  .chat-title{font-weight:700;font-size:15px;}
-  .chat-title a{color:var(--accent);text-decoration:none;}
-  .chat-title a:hover{text-decoration:underline;}
-  .actions{display:flex;gap:6px;}
-  .btn{padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:opacity .15s;}
-  .btn:hover{opacity:.8;}
-  .btn-resume{background:var(--green);color:#fff;}
-  .btn-pause{background:var(--yellow);color:#000;}
+/* ── Settings tab ─────────────────────────────────────────────────────────── */
+#tab-settings{overflow-y:auto;}
+.settings-inner{max-width:680px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.s-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.s-card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted2);margin-bottom:14px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-full{grid-column:1/-1;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+label.fl{font-size:11px;font-weight:600;color:var(--muted2);}
+input.fi,textarea.ft,select.fs{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:7px 10px;border-radius:7px;font-size:13px;font-family:inherit;width:100%;}
+textarea.ft{resize:vertical;min-height:72px;line-height:1.5;}
+input.fi:focus,textarea.ft:focus{outline:none;border-color:var(--accent);}
+.save-btn{background:var(--accent);color:#fff;border:none;padding:7px 18px;
+  border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;margin-top:12px;}
+.save-btn:hover{opacity:.85;}
+.save-btn.ok{background:var(--green)!important;}
+.slider-row{display:flex;align-items:center;gap:10px;}
+input[type=range]{flex:1;accent-color:var(--accent);height:4px;}
+.sv{font-size:13px;font-weight:700;min-width:36px;text-align:right;color:var(--text);}
+.toggle-row{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);}
+.note{font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.5;}
+.sticker-ids{font-family:monospace;font-size:12px;}
 
-  /* Messages */
-  .messages{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:6px;}
-  .msg{max-width:68%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word;}
-  .msg-her{background:var(--surface2);align-self:flex-start;border-bottom-left-radius:3px;}
-  .msg-me{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
-  .msg-time{font-size:10px;opacity:.55;margin-top:3px;text-align:right;}
-  .msg-her .msg-time{text-align:left;}
-
-  .empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;}
-
-  /* Scrollbar */
-  ::-webkit-scrollbar{width:4px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
-
-  @media(max-width:620px){.layout{grid-template-columns:1fr}.main{display:none}.main.visible{display:flex}}
+/* ── Scroll ───────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
 </style>
 </head>
 <body>
+
+<!-- HEADER -->
 <header>
-  <div class="logo">Leo<span>Match</span></div>
-
-  <div class="stat-chip" id="s-matches">Матчей сегодня: <b id="v-matches">—</b></div>
-  <div class="stat-chip" id="s-sent">Отправлено сегодня: <b id="v-sent">—</b></div>
-  <div class="stat-chip">Активных: <b id="v-active">—</b></div>
-  <div class="stat-chip">Пауза: <b id="v-paused">—</b></div>
-
+  <div class="logo">Leo<em>Match</em></div>
+  <div class="chip">Матчей сегодня <b id="v-matches">—</b></div>
+  <div class="chip">Отправлено <b id="v-sent">—</b></div>
+  <div class="chip">Активных <b id="v-active">—</b></div>
+  <div class="chip">Пауза <b id="v-paused">—</b></div>
+  <div class="spacer"></div>
   <div class="mode-group">
     <button class="mode-btn" data-mode="AUTO"   onclick="setMode('AUTO')">AUTO</button>
     <button class="mode-btn" data-mode="HYBRID" onclick="setMode('HYBRID')">HYBRID</button>
     <button class="mode-btn" data-mode="OFF"    onclick="setMode('OFF')">OFF</button>
   </div>
-
-  <button class="theme-btn" onclick="toggleTheme()">☀ / ☾</button>
+  <button class="icon-btn" onclick="toggleTheme()" title="Тема">☀</button>
 </header>
 
-<div class="layout">
+<!-- TABS -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('chats')">Чаты</button>
+  <button class="tab-btn"        onclick="switchTab('activity')">Активность</button>
+  <button class="tab-btn"        onclick="switchTab('settings')">Настройки</button>
+</nav>
+
+<!-- TAB: CHATS -->
+<div class="tab-pane visible" id="tab-chats">
   <aside class="sidebar">
-    <div class="sidebar-header">Чаты</div>
+    <div class="sidebar-hdr">Чаты</div>
     <div class="chat-list" id="chat-list"></div>
   </aside>
-
-  <main class="main" id="main-panel">
-    <div class="empty" id="empty-state">← Выбери чат</div>
-
+  <div class="chat-main">
+    <div class="empty" id="chat-empty">← Выбери чат</div>
     <div id="chat-view" style="display:none;flex-direction:column;height:100%;">
-      <div class="chat-header">
+      <div class="chat-hdr">
         <div class="chat-title" id="chat-title">—</div>
         <div class="actions">
           <button class="btn btn-resume" onclick="setStatus('active')">▶ Возобновить</button>
@@ -120,13 +187,152 @@
       </div>
       <div class="messages" id="messages"></div>
     </div>
-  </main>
+  </div>
+</div>
+
+<!-- TAB: ACTIVITY -->
+<div class="tab-pane" id="tab-activity">
+  <div class="settings-inner">
+    <div class="act-card">
+      <div class="act-title">Активность за 14 дней</div>
+      <div class="chart-wrap" id="act-chart"></div>
+      <div class="act-legend">
+        <span><span class="legend-dot" style="background:var(--accent)"></span>Отправлено</span>
+        <span><span class="legend-dot" style="background:var(--surface3);border:1px solid var(--border)"></span>Получено</span>
+      </div>
+    </div>
+    <div class="act-totals">
+      <div class="act-total">
+        <div class="act-total-val" id="at-sent">—</div>
+        <div class="act-total-lbl">Отправлено за 14 дней</div>
+      </div>
+      <div class="act-total">
+        <div class="act-total-val" id="at-recv">—</div>
+        <div class="act-total-lbl">Получено за 14 дней</div>
+      </div>
+      <div class="act-total">
+        <div class="act-total-val" id="at-total">—</div>
+        <div class="act-total-lbl">Всего матчей</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: SETTINGS -->
+<div class="tab-pane" id="tab-settings">
+<div class="settings-inner">
+
+  <!-- PERSONA -->
+  <div class="s-card">
+    <div class="s-card-title">Биография</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label class="fl">Имя</label>
+        <input class="fi" id="p-name" type="text">
+      </div>
+      <div class="fg">
+        <label class="fl">Возраст</label>
+        <input class="fi" id="p-age" type="number" min="16" max="80">
+      </div>
+      <div class="fg form-full">
+        <label class="fl">О себе (работа, хобби, интересы)</label>
+        <textarea class="ft" id="p-about"></textarea>
+      </div>
+      <div class="fg form-full">
+        <label class="fl">Характер и вайб</label>
+        <textarea class="ft" id="p-character"></textarea>
+      </div>
+      <div class="fg form-full">
+        <label class="fl">Как пишешь</label>
+        <textarea class="ft" id="p-writing"></textarea>
+      </div>
+      <div class="fg form-full">
+        <label class="fl">Табу (чего бот никогда не пишет)</label>
+        <textarea class="ft" id="p-taboo"></textarea>
+      </div>
+    </div>
+    <button class="save-btn" id="save-persona" onclick="savePersona()">Сохранить</button>
+  </div>
+
+  <!-- DELAYS -->
+  <div class="s-card">
+    <div class="s-card-title">Задержки ответа</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label class="fl">Минимум (сек)</label>
+        <div class="slider-row">
+          <input type="range" id="d-min" min="5" max="300" oninput="document.getElementById('d-min-v').textContent=this.value">
+          <span class="sv" id="d-min-v">15</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Максимум (сек)</label>
+        <div class="slider-row">
+          <input type="range" id="d-max" min="10" max="600" oninput="document.getElementById('d-max-v').textContent=this.value">
+          <span class="sv" id="d-max-v">90</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Макс. сообщений в час</label>
+        <input class="fi" id="d-mph" type="number" min="1" max="50">
+      </div>
+    </div>
+    <button class="save-btn" id="save-delays" onclick="saveDelays()">Сохранить</button>
+  </div>
+
+  <!-- SLEEP -->
+  <div class="s-card">
+    <div class="s-card-title">Расписание сна</div>
+    <label class="toggle-row">
+      <input type="checkbox" id="sleep-on" onchange="toggleSleepFields()">
+      <span>Включить режим сна</span>
+    </label>
+    <div id="sleep-fields" style="margin-top:12px;display:none;">
+      <div class="form-grid">
+        <div class="fg">
+          <label class="fl">Засыпаю (час, 0–23)</label>
+          <input class="fi" id="sleep-start" type="number" min="0" max="23" value="23">
+        </div>
+        <div class="fg">
+          <label class="fl">Просыпаюсь (час, 0–23)</label>
+          <input class="fi" id="sleep-end" type="number" min="0" max="23" value="8">
+        </div>
+      </div>
+      <p class="note">Например: засыпаю в 23, просыпаюсь в 8 — бот молчит с 23:00 до 08:00.<br>
+      Сообщения приходят, но ответ придёт после пробуждения.</p>
+    </div>
+    <button class="save-btn" id="save-sleep" onclick="saveSleep()">Сохранить</button>
+  </div>
+
+  <!-- STICKERS -->
+  <div class="s-card">
+    <div class="s-card-title">Стикеры</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label class="fl">Вероятность стикера после сообщения (%)</label>
+        <div class="slider-row">
+          <input type="range" id="st-prob" min="0" max="100" oninput="document.getElementById('st-prob-v').textContent=this.value+'%'">
+          <span class="sv" id="st-prob-v">15%</span>
+        </div>
+      </div>
+      <div class="fg form-full">
+        <label class="fl">File ID стикеров (по одному на строку)</label>
+        <textarea class="ft sticker-ids" id="st-ids" rows="5" placeholder="CAACAgIAAx...&#10;CAACAgIAAy..."></textarea>
+        <p class="note">
+          Как получить file_id: перешли любой стикер боту <b>@RawDataBot</b> в Telegram.<br>
+          Он покажет поле <code>file_id</code> — скопируй его сюда.
+        </p>
+      </div>
+    </div>
+    <button class="save-btn" id="save-stickers" onclick="saveStickers()">Сохранить</button>
+  </div>
+
+</div>
 </div>
 
 <script>
-let currentChat = null;
-let allChats = [];
-let currentMode = 'AUTO';
+// ── State ──────────────────────────────────────────────────────────────────
+let allChats = [], currentChat = null;
 
 // ── Theme ──────────────────────────────────────────────────────────────────
 function toggleTheme(){
@@ -134,134 +340,251 @@ function toggleTheme(){
   h.setAttribute('data-theme', h.getAttribute('data-theme')==='dark'?'light':'dark');
 }
 
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function switchTab(name){
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('visible'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('visible');
+  event.target.classList.add('active');
+  if(name==='activity') loadActivity();
+  if(name==='settings') loadSettings();
+}
+
 // ── Stats ──────────────────────────────────────────────────────────────────
 async function loadStats(){
-  try {
-    const s = await (await fetch('/api/stats')).json();
-    document.getElementById('v-matches').textContent = s.matches_today;
-    document.getElementById('v-sent').textContent    = s.sent_today;
-    document.getElementById('v-active').textContent  = s.active;
-    document.getElementById('v-paused').textContent  = s.paused;
-  } catch(e){}
+  try{
+    const s = await fetchJ('/api/stats');
+    set('v-matches', s.matches_today);
+    set('v-sent',    s.sent_today);
+    set('v-active',  s.active);
+    set('v-paused',  s.paused);
+  }catch(e){}
 }
 
 // ── Mode ───────────────────────────────────────────────────────────────────
 async function loadMode(){
-  try {
-    const d = await (await fetch('/api/mode')).json();
-    currentMode = d.mode;
-    updateModeUI(currentMode);
-  } catch(e){}
+  try{
+    const {mode} = await fetchJ('/api/mode');
+    applyMode(mode);
+  }catch(e){}
 }
-
 async function setMode(mode){
-  await fetch('/api/mode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})});
-  currentMode = mode;
-  updateModeUI(mode);
+  await postJ('/api/mode',{mode});
+  applyMode(mode);
 }
-
-function updateModeUI(mode){
-  document.querySelectorAll('.mode-btn').forEach(btn => {
-    btn.classList.remove('active-auto','active-hybrid','active-off');
-    if(btn.dataset.mode === mode){
-      btn.classList.add(`active-${mode.toLowerCase()}`);
-    }
+function applyMode(mode){
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.remove('active-auto','active-hybrid','active-off');
+    if(b.dataset.mode===mode) b.classList.add(`active-${mode.toLowerCase()}`);
   });
 }
 
 // ── Chats ──────────────────────────────────────────────────────────────────
 async function loadChats(){
-  try {
-    allChats = await (await fetch('/api/chats')).json();
+  try{
+    allChats = await fetchJ('/api/chats');
     renderChats();
-  } catch(e){}
+  }catch(e){}
 }
-
 function renderChats(){
-  const list = document.getElementById('chat-list');
+  const el = document.getElementById('chat-list');
   if(!allChats.length){
-    list.innerHTML = '<div style="padding:20px;color:var(--muted);font-size:13px;text-align:center">Матчей пока нет</div>';
+    el.innerHTML='<div style="padding:18px;color:var(--muted);font-size:12px;text-align:center">Матчей пока нет</div>';
     return;
   }
-  list.innerHTML = allChats.map(c => {
-    const initial = (c.name || c.username || '?')[0].toUpperCase();
-    const displayName = c.name ? `${c.name} (@${c.username||c.telegram_chat_id})` : `@${c.username||c.telegram_chat_id}`;
-    const preview = c.last_message
-      ? (c.last_sender==='me' ? '→ ' : '') + esc(c.last_message).substring(0,45) + (c.last_message.length>45?'…':'')
-      : '&nbsp;';
-    const previewCls = c.last_sender==='me' ? 'chat-preview me' : 'chat-preview';
-    return `
-      <div class="chat-item${currentChat?.id===c.id?' active':''}" onclick="selectChat(${c.id})">
-        <div class="avatar">${initial}</div>
-        <div class="chat-info">
-          <div class="chat-name">${esc(displayName)}</div>
-          <div class="${previewCls}">${preview}</div>
-        </div>
-        <span class="badge badge-${c.status}">${c.status==='active'?'active':'pause'}</span>
-      </div>`;
+  el.innerHTML = allChats.map(c=>{
+    const init = (c.name||c.username||'?')[0].toUpperCase();
+    const disp = c.name ? `${esc(c.name)} · @${esc(c.username||'')}` : `@${esc(c.username||c.telegram_chat_id)}`;
+    const prev = c.last_message ? esc(c.last_message).substring(0,44)+(c.last_message.length>44?'…':'') : '';
+    const pcls = c.last_sender==='me' ? 'ci-prev me-prev' : 'ci-prev';
+    return `<div class="chat-item${currentChat?.id===c.id?' sel':''}" onclick="selectChat(${c.id})">
+      <div class="avatar">${init}</div>
+      <div class="ci-info">
+        <div class="ci-name">${disp}</div>
+        <div class="${pcls}">${prev}</div>
+      </div>
+      <span class="badge b-${c.status}">${c.status==='active'?'●':'⏸'}</span>
+    </div>`;
   }).join('');
 }
-
 async function selectChat(id){
   currentChat = allChats.find(c=>c.id===id);
-  const username = currentChat.username || currentChat.telegram_chat_id;
-  const name = currentChat.name ? `${currentChat.name} · ` : '';
-  document.getElementById('chat-title').innerHTML =
-    `${esc(name)}<a href="https://t.me/${username}" target="_blank">@${esc(username)}</a>`;
-  document.getElementById('empty-state').style.display='none';
+  const u = currentChat.username||currentChat.telegram_chat_id;
+  const nm = currentChat.name ? `${esc(currentChat.name)} &middot; ` : '';
+  document.getElementById('chat-title').innerHTML = `${nm}<a href="https://t.me/${u}" target="_blank">@${esc(u)}</a>`;
+  document.getElementById('chat-empty').style.display='none';
   const cv = document.getElementById('chat-view');
   cv.style.display='flex';
   renderChats();
   await loadMessages(id);
 }
-
-// ── Messages ───────────────────────────────────────────────────────────────
 async function loadMessages(chatId){
-  try {
-    const msgs = await (await fetch(`/api/messages/${chatId}`)).json();
+  try{
+    const msgs = await fetchJ(`/api/messages/${chatId}`);
     const el = document.getElementById('messages');
     if(!msgs.length){ el.innerHTML='<div class="empty">Нет сообщений</div>'; return; }
     el.innerHTML = msgs.map(m=>`
       <div class="msg msg-${m.sender==='me'?'me':'her'}">
-        ${esc(m.text)}
-        <div class="msg-time">${fmtTime(m.timestamp)}</div>
+        ${esc(m.text)}<div class="msg-time">${fmtTime(m.timestamp)}</div>
       </div>`).join('');
     el.scrollTop = el.scrollHeight;
-  } catch(e){}
+  }catch(e){}
 }
-
-// ── Status ─────────────────────────────────────────────────────────────────
 async function setStatus(status){
   if(!currentChat) return;
-  await fetch('/api/status',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({telegram_chat_id: currentChat.telegram_chat_id, status})
-  });
-  currentChat.status = status;
+  await postJ('/api/status',{telegram_chat_id:currentChat.telegram_chat_id, status});
+  currentChat.status=status;
   await loadChats();
 }
 
-// ── Utils ──────────────────────────────────────────────────────────────────
-function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// ── Activity ───────────────────────────────────────────────────────────────
+async function loadActivity(){
+  try{
+    const data = await fetchJ('/api/activity?days=14');
+    const stats = await fetchJ('/api/stats');
+    renderChart(data);
+    set('at-total', stats.total);
+    const ts = data.reduce((a,d)=>a+(d.sent||0),0);
+    const tr = data.reduce((a,d)=>a+(d.received||0),0);
+    set('at-sent', ts);
+    set('at-recv', tr);
+  }catch(e){}
+}
+function renderChart(data){
+  const el = document.getElementById('act-chart');
+  const days = getLast14();
+  const map  = Object.fromEntries(data.map(d=>[d.day,d]));
+  const max  = Math.max(...days.map(d=>{ const x=map[d]||{}; return (x.sent||0)+(x.received||0); }), 1);
+  el.innerHTML = days.map(day=>{
+    const d   = map[day]||{sent:0,received:0};
+    const sh  = Math.round(((d.sent||0)/max)*100);
+    const rh  = Math.round(((d.received||0)/max)*100);
+    const lbl = new Date(day+'T12:00:00').toLocaleDateString('ru',{day:'numeric',month:'short'});
+    return `<div class="chart-col">
+      <div class="chart-bars">
+        <div class="bar-her" style="height:${rh}%"></div>
+        <div class="bar-me"  style="height:${sh}%"></div>
+      </div>
+      <div class="chart-lbl">${lbl}</div>
+    </div>`;
+  }).join('');
+}
+function getLast14(){
+  const days=[];
+  for(let i=13;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    days.push(d.toISOString().split('T')[0]);
+  }
+  return days;
+}
 
+// ── Settings ───────────────────────────────────────────────────────────────
+async function loadSettings(){
+  await Promise.all([loadPersona(), loadDelays(), loadSleep(), loadStickers()]);
+}
+
+async function loadPersona(){
+  try{
+    const p = await fetchJ('/api/persona');
+    document.getElementById('p-name').value      = p.name||'';
+    document.getElementById('p-age').value       = p.age||'';
+    document.getElementById('p-about').value     = (p.about||'').trim();
+    document.getElementById('p-character').value = (p.character||'').trim();
+    document.getElementById('p-writing').value   = (p.writing_style||'').trim();
+    document.getElementById('p-taboo').value     = (p.taboo||'').trim();
+  }catch(e){}
+}
+async function savePersona(){
+  const ok = await postJ('/api/persona',{
+    name:         document.getElementById('p-name').value,
+    age:          +document.getElementById('p-age').value,
+    about:        document.getElementById('p-about').value,
+    character:    document.getElementById('p-character').value,
+    writing_style:document.getElementById('p-writing').value,
+    taboo:        document.getElementById('p-taboo').value,
+  });
+  flash('save-persona', ok.ok);
+}
+
+async function loadDelays(){
+  try{
+    const d = await fetchJ('/api/delays');
+    const mn=document.getElementById('d-min'), mx=document.getElementById('d-max');
+    mn.value=d.min; document.getElementById('d-min-v').textContent=d.min;
+    mx.value=d.max; document.getElementById('d-max-v').textContent=d.max;
+    document.getElementById('d-mph').value=d.max_per_hour;
+  }catch(e){}
+}
+async function saveDelays(){
+  const ok = await postJ('/api/delays',{
+    min:         +document.getElementById('d-min').value,
+    max:         +document.getElementById('d-max').value,
+    max_per_hour:+document.getElementById('d-mph').value,
+  });
+  flash('save-delays', ok.ok);
+}
+
+async function loadSleep(){
+  try{
+    const s = await fetchJ('/api/sleep');
+    document.getElementById('sleep-on').checked   = s.enabled;
+    document.getElementById('sleep-start').value  = s.start;
+    document.getElementById('sleep-end').value    = s.end;
+    toggleSleepFields();
+  }catch(e){}
+}
+function toggleSleepFields(){
+  const on = document.getElementById('sleep-on').checked;
+  document.getElementById('sleep-fields').style.display = on ? 'block' : 'none';
+}
+async function saveSleep(){
+  const ok = await postJ('/api/sleep',{
+    enabled: document.getElementById('sleep-on').checked,
+    start:   +document.getElementById('sleep-start').value,
+    end:     +document.getElementById('sleep-end').value,
+  });
+  flash('save-sleep', ok.ok);
+}
+
+async function loadStickers(){
+  try{
+    const s = await fetchJ('/api/stickers');
+    document.getElementById('st-prob').value = s.probability;
+    document.getElementById('st-prob-v').textContent = s.probability+'%';
+    document.getElementById('st-ids').value = (s.ids||[]).join('\n');
+  }catch(e){}
+}
+async function saveStickers(){
+  const raw  = document.getElementById('st-ids').value;
+  const ids  = raw.split('\n').map(s=>s.trim()).filter(Boolean);
+  const prob = +document.getElementById('st-prob').value;
+  const ok   = await postJ('/api/stickers',{ids, probability:prob});
+  flash('save-stickers', ok.ok);
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+async function fetchJ(url){ return (await fetch(url)).json(); }
+async function postJ(url,body){ return (await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json(); }
+function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function set(id,v){ document.getElementById(id).textContent=v; }
 function fmtTime(ts){
   if(!ts) return '';
-  const d = new Date(ts.replace(' ','T'));
-  const now = new Date();
+  const d=new Date((ts||'').replace(' ','T')), now=new Date();
   if(d.toDateString()===now.toDateString())
     return d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
   return d.toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 }
+function flash(btnId, success){
+  const b = document.getElementById(btnId);
+  const orig = b.textContent;
+  b.textContent = success ? '✓ Сохранено' : '✗ Ошибка';
+  b.classList.toggle('ok', success);
+  setTimeout(()=>{ b.textContent=orig; b.classList.remove('ok'); }, 2000);
+}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 Promise.all([loadChats(), loadStats(), loadMode()]);
-
-setInterval(()=>{
-  loadChats();
-  loadStats();
-  if(currentChat) loadMessages(currentChat.id);
-}, 10000);
+setInterval(()=>{ loadChats(); loadStats(); if(currentChat) loadMessages(currentChat.id); }, 10000);
 </script>
 </body>
 </html>
