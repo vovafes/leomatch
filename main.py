@@ -253,15 +253,15 @@ async def main():
         await get_setting("max_per_hour", str(config.MAX_MESSAGES_PER_HOUR))
     )
 
-    tasks = [app.start()]
     if config.WEB_ENABLED:
         from web.server import start_web
-        tasks.append(start_web())
+        await start_web()
 
-    await asyncio.gather(*tasks)
-    logger.info("LeoMatch started. Mode: %s", config.MODE)
-    await asyncio.Event().wait()
+    # async with handles app.start() / app.stop() correctly
+    async with app:
+        logger.info("LeoMatch started. Mode: %s", config.MODE)
+        await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
-    app.run(main())
+    asyncio.run(main())
